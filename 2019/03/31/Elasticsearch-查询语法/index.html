@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-g.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-g.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="英文文档(最新) 中文文档(2.x)  轻量检索(URL search)1GET /megacorp/employee/_search?q=last_name:Smith 参数说明详见 查询表达式Query-string 搜索通过命令非常方便地进行临时性的即席搜索 ，但它有自身的局限性（参见 轻量 搜索）。Elasticsearch 提供一个丰富灵活的查询语言叫做 查询表达式 ， 它支持构建更加">
+<meta name="keywords" content="Elastic">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Elasticsearch 查询语法">
+<meta property="og:url" content="https://legatoplay.github.io/2019/03/31/Elasticsearch-查询语法/index.html">
+<meta property="og:site_name" content="Gary&#39;s Blog">
+<meta property="og:description" content="英文文档(最新) 中文文档(2.x)  轻量检索(URL search)1GET /megacorp/employee/_search?q=last_name:Smith 参数说明详见 查询表达式Query-string 搜索通过命令非常方便地进行临时性的即席搜索 ，但它有自身的局限性（参见 轻量 搜索）。Elasticsearch 提供一个丰富灵活的查询语言叫做 查询表达式 ， 它支持构建更加">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/icons/callouts/1.png">
+<meta property="og:image" content="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/icons/callouts/2.png">
+<meta property="og:updated_time" content="2019-04-16T06:33:18.563Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Elasticsearch 查询语法">
+<meta name="twitter:description" content="英文文档(最新) 中文文档(2.x)  轻量检索(URL search)1GET /megacorp/employee/_search?q=last_name:Smith 参数说明详见 查询表达式Query-string 搜索通过命令非常方便地进行临时性的即席搜索 ，但它有自身的局限性（参见 轻量 搜索）。Elasticsearch 提供一个丰富灵活的查询语言叫做 查询表达式 ， 它支持构建更加">
+<meta name="twitter:image" content="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/icons/callouts/1.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="https://legatoplay.github.io/2019/03/31/Elasticsearch-查询语法/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Elasticsearch 查询语法 | Gary's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Gary's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">7</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">4</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">5</span></a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://legatoplay.github.io/2019/03/31/Elasticsearch-查询语法/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Gary">
+      <meta itemprop="description" content="主攻JAVA。">
+      <meta itemprop="image" content="/images/header.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Gary's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Elasticsearch 查询语法
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-31 20:20:43" itemprop="dateCreated datePublished" datetime="2019-03-31T20:20:43+08:00">2019-03-31</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-04-16 14:33:18" itemprop="dateModified" datetime="2019-04-16T14:33:18+08:00">2019-04-16</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Elastic/" itemprop="url" rel="index"><span itemprop="name">Elastic</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="post-meta-item-icon">
+            <i class="fa fa-eye"></i>
+             阅读次数： 
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started.html" target="_blank" rel="noopener">英文文档(最新)</a></p>
+<p><a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html" target="_blank" rel="noopener">中文文档(2.x)</a></p>
+</blockquote>
+<h1 id="轻量检索-URL-search"><a href="#轻量检索-URL-search" class="headerlink" title="轻量检索(URL search)"></a><strong>轻量检索(<code>URL search</code>)</strong></h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /megacorp/employee/_search?q=last_name:Smith</span><br></pre></td></tr></table></figure>
+<p>参数说明<a href="https://www.elastic.co/guide/en/elasticsearch/reference/6.5/search-uri-request.html#_parameters_3" target="_blank" rel="noopener">详见</a></p>
+<h1 id="查询表达式"><a href="#查询表达式" class="headerlink" title="查询表达式"></a><strong>查询表达式</strong></h1><p>Query-string 搜索通过命令非常方便地进行临时性的即席搜索 ，但它有自身的局限性（参见 <a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/search-lite.html" target="_blank" rel="noopener"><em>轻量</em> 搜索</a>）。Elasticsearch 提供一个丰富灵活的查询语言叫做 <em>查询表达式</em> ， 它支持构建更加复杂和健壮的查询。</p>
+<p><em>领域特定语言</em> （DSL）， 指定了使用一个 JSON 请求。我们可以像这样重写之前的查询所有 Smith 的搜索 </p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"query"</span> : &#123;</span><br><span class="line">        <span class="attr">"match"</span> : &#123;</span><br><span class="line">            <span class="attr">"last_name"</span> : <span class="string">"Smith"</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<p>参数说明<a href="https://www.elastic.co/guide/en/elasticsearch/reference/6.5/search-request-body.html#_parameters_4" target="_blank" rel="noopener">详见</a></p>
+<p><code>from</code>(defualt:0) &amp; <code>size</code>(default:10) <strong>分页</strong></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"query"</span>: &#123; <span class="attr">"match_all"</span>: &#123;&#125; &#125;,</span><br><span class="line">  <span class="attr">"from"</span>: <span class="number">10</span>,</span><br><span class="line">  <span class="attr">"size"</span>: <span class="number">10</span> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>sort</code><strong>排序</strong></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"query"</span>: &#123; <span class="attr">"match_all"</span>: &#123;&#125; &#125;,</span><br><span class="line">  <span class="attr">"sort"</span> : [</span><br><span class="line">        &#123; <span class="attr">"post_date"</span> : &#123;<span class="attr">"order"</span> : <span class="string">"asc"</span>&#125;&#125;,</span><br><span class="line">        <span class="string">"user"</span>,</span><br><span class="line">        &#123; <span class="attr">"name"</span> : <span class="string">"desc"</span> &#125;,</span><br><span class="line">        &#123; <span class="attr">"age"</span> : <span class="string">"desc"</span> &#125;,</span><br><span class="line">        <span class="string">"_score"</span></span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>排序类型（sort order）</p>
+<table>
+<thead>
+<tr>
+<th><code>asc</code></th>
+<th>正序</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>desc</code></td>
+<td>倒序</td>
+</tr>
+</tbody>
+</table>
+<p>排序模式 (sort mode option)</p>
+<table>
+<thead>
+<tr>
+<th><code>min</code></th>
+<th>最小值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max</code></td>
+<td>最大值</td>
+</tr>
+<tr>
+<td><code>sum</code></td>
+<td>求和</td>
+</tr>
+<tr>
+<td><code>avg</code></td>
+<td>求平均值</td>
+</tr>
+<tr>
+<td><code>median</code></td>
+<td>中间值</td>
+</tr>
+</tbody>
+</table>
+<p><code>_soucre</code> <strong>显示字段</strong></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"query"</span>: &#123; <span class="attr">"match_all"</span>: &#123;&#125; &#125;,</span><br><span class="line">  <span class="attr">"_source"</span>: [<span class="string">"account_number"</span>, <span class="string">"balance"</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="match-all-查询"><a href="#match-all-查询" class="headerlink" title="match_all 查询"></a><strong>match_all 查询</strong></h2><p>match_all 查询简单的 匹配所有文档。在没有指定查询方式时，它是默认的查询：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"query"</span>: &#123; <span class="attr">"match_all"</span>: &#123;&#125; &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="match查询"><a href="#match查询" class="headerlink" title="match查询"></a><strong>match查询</strong></h2><p>无论你在任何字段上进行的是全文搜索还是精确查询，<code>match</code> 查询是你可用的标准查询。如果你在一个全文字段上使用 <code>match</code> 查询，在执行查询前，它将用正确的分析器去分析查询字符串：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">"match"</span>: &#123; <span class="attr">"tweet"</span>: <span class="string">"About Search"</span> &#125;&#125;</span><br></pre></td></tr></table></figure>
+<p>如果在一个精确值的字段上使用它， 例如数字、日期、布尔或者一个 <code>not_analyzed</code> 字符串字段，那么它将会精确匹配给定的值：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123; &quot;match&quot;: &#123; &quot;age&quot;:    26           &#125;&#125;</span><br><span class="line">&#123; &quot;match&quot;: &#123; &quot;date&quot;:   &quot;2014-09-01&quot; &#125;&#125;</span><br><span class="line">&#123; &quot;match&quot;: &#123; &quot;public&quot;: true         &#125;&#125;</span><br><span class="line">&#123; &quot;match&quot;: &#123; &quot;tag&quot;:    &quot;full_text&quot;  &#125;&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="multi-match-查询"><a href="#multi-match-查询" class="headerlink" title="multi_match 查询"></a><strong>multi_match 查询</strong></h2><p><code>multi_match</code> 查询可以在多个字段上执行相同的 <code>match</code> 查询：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"multi_match"</span>: &#123;</span><br><span class="line">        <span class="attr">"query"</span>:    <span class="string">"full text search"</span>,</span><br><span class="line">        <span class="attr">"fields"</span>:   [ <span class="string">"title"</span>, <span class="string">"body"</span> ]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="range查询"><a href="#range查询" class="headerlink" title="range查询"></a><strong>range查询</strong></h2><p><code>range</code> 查询找出那些落在指定区间内的数字或者时间</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"range"</span>: &#123;</span><br><span class="line">        <span class="attr">"age"</span>: &#123;</span><br><span class="line">            <span class="attr">"gte"</span>:  <span class="number">20</span>,</span><br><span class="line">            <span class="attr">"lt"</span>:   <span class="number">30</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>被允许的操作符如下：</p>
+<ul>
+<li><code>gt</code> :大于</li>
+<li><code>gte</code> :大于等于</li>
+<li><code>lt</code> :小于</li>
+<li><code>lte</code> :小于等于</li>
+</ul>
+<h2 id="term查询"><a href="#term查询" class="headerlink" title="term查询"></a><strong>term查询</strong></h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123; &quot;term&quot;: &#123; &quot;age&quot;:    26           &#125;&#125;</span><br><span class="line">&#123; &quot;term&quot;: &#123; &quot;date&quot;:   &quot;2014-09-01&quot; &#125;&#125;</span><br><span class="line">&#123; &quot;term&quot;: &#123; &quot;public&quot;: true         &#125;&#125;</span><br><span class="line">&#123; &quot;term&quot;: &#123; &quot;tag&quot;:    &quot;full_text&quot;  &#125;&#125;</span><br></pre></td></tr></table></figure>
+<p><code>term</code> 查询对于输入的文本不 <em>分析</em> ，所以它将给定的值进行精确查询。</p>
+<h2 id="terms查询"><a href="#terms查询" class="headerlink" title="terms查询"></a><strong>terms查询</strong></h2><p><code>terms</code> 查询和 <code>term</code> 查询一样，但它允许你指定多值进行匹配。如果这个字段包含了指定值中的任何一个值，那么这个文档满足条件：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">"terms"</span>: &#123; <span class="attr">"tag"</span>: [ <span class="string">"search"</span>, <span class="string">"full_text"</span>, <span class="string">"nosql"</span> ] &#125;&#125;</span><br></pre></td></tr></table></figure>
+<p>和<code>term</code>查询一样，<code>terms</code>查询对于输入的文本不分析。它查询那些精确匹配的值（包括在大小写、重音、空格等方面的差异）。</p>
+<h2 id="exists-查询和-missing-查询"><a href="#exists-查询和-missing-查询" class="headerlink" title="exists 查询和 missing 查询"></a><strong>exists 查询和 missing 查询</strong></h2><p><code>exists</code>查询和<code>missing</code>查询被用于查找那些指定字段中有值 (<code>exists</code>) 或无值 (<code>missing</code>) 的文档。这与SQL中的<code>IS_NULL</code>(<code>missing</code>) 和<code>NOT IS_NULL</code>(<code>exists</code>) 在本质上具有共性：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"exists"</span>:   &#123;</span><br><span class="line">        <span class="attr">"field"</span>:    <span class="string">"title"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这些查询经常用于某个字段有值的情况和某个字段缺值的情况。</p>
+<h1 id="组合查询"><a href="#组合查询" class="headerlink" title="组合查询"></a><strong>组合查询</strong></h1><h2 id="bool查询"><a href="#bool查询" class="headerlink" title="bool查询"></a><strong>bool查询</strong></h2><p>这种查询将多查询组合在一起，成为用户自己想要的布尔查询。它接收以下参数：</p>
+<p><code>must</code> like <code>and</code></p>
+<p>文档<em>必须</em>匹配这些条件才能被包含进来。</p>
+<p><code>must_not</code> like <code>&lt;&gt;</code></p>
+<p>文档<em>必须不</em>匹配这些条件才能被包含进来。</p>
+<p><code>should</code> like <code>or</code></p>
+<p>如果满足这些语句中的任意语句，将增加<code>_score</code>，否则，无任何影响。它们主要用于修正每个文档的相关性得分。</p>
+<p><code>filter</code></p>
+<p><em>必须</em>匹配，但它以不评分、过滤模式来进行。这些语句对评分没有贡献，只是根据过滤标准来排除或包含文档。</p>
+<p><code>由于这是我们看到的第一个包含多个查询的查询，所以有必要讨论一下相关性得分是如何组合的。每一个子查询都独自地计算文档的相关性得分。一旦他们的得分被计算出来，</code>bool查询就将这些得分进行合并并且返回一个代表整个布尔操作的得分。</p>
+<p><code>下面的查询用于查找title字段匹配how to make millions并且不被标识为spam的文档。那些被标识为starred或在2014之后的文档，将比另外那些文档拥有更高的排名。如果 _两者_ 都满足，那么它排名将更高：</code></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"query"</span>: &#123;</span><br><span class="line">        <span class="attr">"bool"</span>: &#123;</span><br><span class="line">            <span class="attr">"must"</span>:     &#123; <span class="attr">"match"</span>: &#123; <span class="attr">"title"</span>: <span class="string">"how to make millions"</span> &#125;&#125;,</span><br><span class="line">            <span class="attr">"must_not"</span>: &#123; <span class="attr">"match"</span>: &#123; <span class="attr">"tag"</span>:   <span class="string">"spam"</span> &#125;&#125;,</span><br><span class="line">            <span class="attr">"should"</span>: [</span><br><span class="line">                &#123; <span class="attr">"match"</span>: &#123; <span class="attr">"tag"</span>: <span class="string">"starred"</span> &#125;&#125;,</span><br><span class="line">                &#123; <span class="attr">"range"</span>: &#123; <span class="attr">"date"</span>: &#123; <span class="attr">"gte"</span>: <span class="string">"2014-01-01"</span> &#125;&#125;&#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><em>如果没有<code>must</code>语句，那么至少需要能够匹配其中的一条<code>should</code>语句。但，如果存在至少一条<code>must</code>语句，则对<code>should</code>语句的匹配没有要求。</em></p>
+<h2 id="带filter查询"><a href="#带filter查询" class="headerlink" title="带filter查询"></a><strong>带filter查询</strong></h2><p>如果我们不想因为文档的时间而影响得分，可以用<code>filter</code>语句来重写前面的例子：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"query"</span>:&#123;</span><br><span class="line">        <span class="attr">"bool"</span>: &#123;</span><br><span class="line">            <span class="attr">"must"</span>:     &#123; <span class="attr">"match"</span>: &#123; <span class="attr">"title"</span>: <span class="string">"how to make millions"</span> &#125;&#125;,</span><br><span class="line">            <span class="attr">"must_not"</span>: &#123; <span class="attr">"match"</span>: &#123; <span class="attr">"tag"</span>:   <span class="string">"spam"</span> &#125;&#125;,</span><br><span class="line">            <span class="attr">"should"</span>: [</span><br><span class="line">                &#123; <span class="attr">"match"</span>: &#123; <span class="attr">"tag"</span>: <span class="string">"starred"</span> &#125;&#125;</span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"filter"</span>: &#123;</span><br><span class="line">              <span class="attr">"range"</span>: &#123; <span class="attr">"date"</span>: &#123; <span class="attr">"gte"</span>: <span class="string">"2014-01-01"</span> &#125;&#125; </span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过将 range 查询移到 <code>filter</code> 语句中，我们将它转成不评分的查询，将不再影响文档的相关性排名。由于它现在是一个不评分的查询，可以使用各种对 filter 查询有效的优化手段来提升性能。</p>
+<p>所有查询都可以借鉴这种方式。将查询移到 <code>bool</code> 查询的 <code>filter</code> 语句中，这样它就自动的转成一个不评分的 filter 了。</p>
+<p>如果你需要通过多个不同的标准来过滤你的文档，<code>bool</code> 查询本身也可以被用做不评分的查询。简单地将它放置到 <code>filter</code> 语句中并在内部构建布尔逻辑：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"query"</span>:&#123;</span><br><span class="line">        <span class="attr">"bool"</span>: &#123;</span><br><span class="line">            <span class="attr">"must"</span>:     &#123; <span class="attr">"match"</span>: &#123; <span class="attr">"title"</span>: <span class="string">"how to make millions"</span> &#125;&#125;,</span><br><span class="line">            <span class="attr">"must_not"</span>: &#123; <span class="attr">"match"</span>: &#123; <span class="attr">"tag"</span>:   <span class="string">"spam"</span> &#125;&#125;,</span><br><span class="line">            <span class="attr">"should"</span>: [</span><br><span class="line">                &#123; <span class="attr">"match"</span>: &#123; <span class="attr">"tag"</span>: <span class="string">"starred"</span> &#125;&#125;</span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"filter"</span>: &#123;</span><br><span class="line">              <span class="attr">"bool"</span>: &#123; </span><br><span class="line">                  <span class="attr">"must"</span>: [</span><br><span class="line">                      &#123; <span class="attr">"range"</span>: &#123; <span class="attr">"date"</span>: &#123; <span class="attr">"gte"</span>: <span class="string">"2014-01-01"</span> &#125;&#125;&#125;,</span><br><span class="line">                      &#123; <span class="attr">"range"</span>: &#123; <span class="attr">"price"</span>: &#123; <span class="attr">"lte"</span>: <span class="number">29.99</span> &#125;&#125;&#125;</span><br><span class="line">                  ],</span><br><span class="line">                  <span class="attr">"must_not"</span>: [</span><br><span class="line">                      &#123; <span class="attr">"term"</span>: &#123; <span class="attr">"category"</span>: <span class="string">"ebooks"</span> &#125;&#125;</span><br><span class="line">                  ]</span><br><span class="line">              &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="聚合"><a href="#聚合" class="headerlink" title="聚合"></a><strong>聚合</strong></h1><p><em>桶（Buckets）</em></p>
+<p>满足特定条件的文档的集合</p>
+<p><em>指标（Metrics）</em></p>
+<p>对桶内的文档进行统计计算</p>
+<p>这就是全部了！每个聚合都是一个或者多个桶和零个或者多个指标的组合。翻译成粗略的SQL语句来解释吧：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(color) </span><br><span class="line"><span class="keyword">FROM</span> <span class="keyword">table</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> color</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th><a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/aggs-high-level.html#CO183-1" target="_blank" rel="noopener"><img src="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/icons/callouts/1.png" alt="img"></a></th>
+<th><code>COUNT(color)</code>  相当于指标。</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/aggs-high-level.html#CO183-2" target="_blank" rel="noopener"><img src="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/icons/callouts/2.png" alt="img"></a></td>
+<td><code>GROUP BY color</code> 相当于桶。</td>
+</tr>
+</tbody>
+</table>
+<p>桶在概念上类似于 SQL 的分组（GROUP BY），而指标则类似于 <code>COUNT()</code> 、 <code>SUM()</code> 、 <code>MAX()</code> 等统计方法。<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"aggs"</span>: &#123;</span><br><span class="line">    <span class="attr">"sales_over_time"</span>: &#123;</span><br><span class="line">      <span class="attr">"date_histogram"</span>: &#123;</span><br><span class="line">        <span class="attr">"field"</span>: <span class="string">"processDate"</span>,</span><br><span class="line">        <span class="attr">"interval"</span>: <span class="string">"year"</span>,</span><br><span class="line">        <span class="attr">"format"</span>: <span class="string">"yyyy"</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Elastic/" rel="tag"># Elastic</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/03/28/Database-Change-Notification/" rel="next" title="Database Change Notification 基于流的表变化通知">
+                <i class="fa fa-chevron-left"></i> Database Change Notification 基于流的表变化通知
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/03/31/Spring-Boot自动配置实现原理/" rel="prev" title="Spring Boot (一)：自动配置实现原理一">
+                Spring Boot (一)：自动配置实现原理一 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/header.jpg" alt="Gary">
+            
+              <p class="site-author-name" itemprop="name">Gary</p>
+              <div class="site-description motion-element" itemprop="description">主攻JAVA。</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">5</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/legatoplay" title="GitHub &rarr; https://github.com/legatoplay" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#轻量检索-URL-search"><span class="nav-number">1.</span> <span class="nav-text">轻量检索(URL search)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#查询表达式"><span class="nav-number">2.</span> <span class="nav-text">查询表达式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#match-all-查询"><span class="nav-number">2.1.</span> <span class="nav-text">match_all 查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#match查询"><span class="nav-number">2.2.</span> <span class="nav-text">match查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#multi-match-查询"><span class="nav-number">2.3.</span> <span class="nav-text">multi_match 查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#range查询"><span class="nav-number">2.4.</span> <span class="nav-text">range查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#term查询"><span class="nav-number">2.5.</span> <span class="nav-text">term查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#terms查询"><span class="nav-number">2.6.</span> <span class="nav-text">terms查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exists-查询和-missing-查询"><span class="nav-number">2.7.</span> <span class="nav-text">exists 查询和 missing 查询</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#组合查询"><span class="nav-number">3.</span> <span class="nav-text">组合查询</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#bool查询"><span class="nav-number">3.1.</span> <span class="nav-text">bool查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#带filter查询"><span class="nav-number">3.2.</span> <span class="nav-text">带filter查询</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#聚合"><span class="nav-number">4.</span> <span class="nav-text">聚合</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gary</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/three/three.min.js"></script>
+
+  
+  <script src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.0"></script>
+
+  <script src="/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.0"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.0"></script>
+<script src="/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.0"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

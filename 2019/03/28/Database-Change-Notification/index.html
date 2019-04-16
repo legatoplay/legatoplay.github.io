@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-g.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-g.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Streams Advanced Queuing User’s Guide(pl/sql)Database JDBC Developer’s GuideOracle高级队列介绍   Database Change Notification’docs-jdbc-styleDCN plsql-styleCQN  设置消息队列">
+<meta name="keywords" content="Oracle">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Database Change Notification 基于流的表变化通知">
+<meta property="og:url" content="https://legatoplay.github.io/2019/03/28/Database-Change-Notification/index.html">
+<meta property="og:site_name" content="Gary&#39;s Blog">
+<meta property="og:description" content="Streams Advanced Queuing User’s Guide(pl/sql)Database JDBC Developer’s GuideOracle高级队列介绍   Database Change Notification’docs-jdbc-styleDCN plsql-styleCQN  设置消息队列">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-04-16T06:33:18.561Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Database Change Notification 基于流的表变化通知">
+<meta name="twitter:description" content="Streams Advanced Queuing User’s Guide(pl/sql)Database JDBC Developer’s GuideOracle高级队列介绍   Database Change Notification’docs-jdbc-styleDCN plsql-styleCQN  设置消息队列">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="https://legatoplay.github.io/2019/03/28/Database-Change-Notification/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Database Change Notification 基于流的表变化通知 | Gary's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Gary's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">7</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">4</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">5</span></a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://legatoplay.github.io/2019/03/28/Database-Change-Notification/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Gary">
+      <meta itemprop="description" content="主攻JAVA。">
+      <meta itemprop="image" content="/images/header.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Gary's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Database Change Notification 基于流的表变化通知
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-28 15:09:40" itemprop="dateCreated datePublished" datetime="2019-03-28T15:09:40+08:00">2019-03-28</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-04-16 14:33:18" itemprop="dateModified" datetime="2019-04-16T14:33:18+08:00">2019-04-16</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="post-meta-item-icon">
+            <i class="fa fa-eye"></i>
+             阅读次数： 
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p><a href="https://docs.oracle.com/cd/E11882_01/server.112/e11013/aq_opers.htm#ADQUE1000" target="_blank" rel="noopener">Streams Advanced Queuing User’s Guide(pl/sql)</a><br><a href="https://docs.oracle.com/cd/E11882_01/java.112/e16548/streamsaq.htm#JJDBC28801" target="_blank" rel="noopener">Database JDBC Developer’s Guide</a><br><a href="https://blog.csdn.net/indexman/article/details/43497933" target="_blank" rel="noopener">Oracle高级队列介绍</a></p>
+</blockquote>
+<blockquote>
+<p><a href="https://docs.oracle.com/cd/E11882_01/java.112/e16548/dbchgnf.htm#JJDBC28815" target="_blank" rel="noopener">Database Change Notification’docs-jdbc-style</a><br><a href="https://docs.oracle.com/cd/B19306_01/appdev.102/b14258/d_chngnt.htm#CIHFDFDJ" target="_blank" rel="noopener">DCN plsql-style</a><br><a href="https://docs.oracle.com/cd/B28359_01/appdev.111/b28424/adfns_cqn.htm#CHEIFAEJ" target="_blank" rel="noopener">CQN</a></p>
+</blockquote>
+<h1 id="设置消息队列"><a href="#设置消息队列" class="headerlink" title="设置消息队列"></a>设置消息队列</h1><a id="more"></a>
+<h3 id="1-用户授权"><a href="#1-用户授权" class="headerlink" title="1 用户授权"></a>1 用户授权</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">CONNECT / AS SYSDBA;</span><br><span class="line">GRANT EXECUTE ON DBMS_AQ to GDLISNET;</span><br><span class="line">GRANT EXECUTE ON DBMS_AQADM to GDLISNET;</span><br><span class="line">GRANT AQ_ADMINISTRATOR_ROLE TO GDLISNET;</span><br><span class="line">--GRANT ADMINISTER DATABASE TRIGGER TO GDLISNET;</span><br></pre></td></tr></table></figure>
+<h3 id="2-创建队列表"><a href="#2-创建队列表" class="headerlink" title="2 创建队列表"></a>2 创建队列表</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">begin</span><br><span class="line">  dbms_aqadm.drop_queue_table(queue_table =&gt; &apos;CATALOG_AQ_TABLE&apos;, force =&gt; true);</span><br><span class="line">end;</span><br><span class="line">/</span><br><span class="line"></span><br><span class="line">begin</span><br><span class="line">  dbms_aqadm.create_queue_table(</span><br><span class="line">    queue_table =&gt; &apos;GDLISNET.CATALOG_AQ_TABLE&apos;,</span><br><span class="line">    queue_payload_type =&gt; &apos;sys.aq$_jms_text_message&apos;,</span><br><span class="line">    sort_list =&gt; &apos;ENQ_TIME&apos;,</span><br><span class="line">    compatible =&gt; &apos;10.0.0&apos;,</span><br><span class="line">    primary_instance =&gt; 0,</span><br><span class="line">    secondary_instance =&gt; 0,</span><br><span class="line">    comment =&gt; &apos;主键码变化队列表&apos;,</span><br><span class="line">    storage_clause =&gt; &apos;tablespace GDLISNET_TABLE pctfree 10 initrans 1 maxtrans 255 storage ( initial 64K next 1M minextents 1 maxextents unlimited )&apos;);</span><br><span class="line">end;</span><br><span class="line">/</span><br></pre></td></tr></table></figure>
+<h3 id="3-创建队列"><a href="#3-创建队列" class="headerlink" title="3 创建队列"></a>3 创建队列</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">begin</span><br><span class="line">  dbms_aqadm.drop_queue(queue_name =&gt; &apos;CATALOG_AQ&apos;);</span><br><span class="line">end;</span><br><span class="line">/</span><br><span class="line">begin</span><br><span class="line">  dbms_aqadm.create_queue(</span><br><span class="line">    queue_name =&gt; &apos;GDLISNET.CATALOG_AQ&apos;,</span><br><span class="line">    queue_table =&gt; &apos;GDLISNET.CATALOG_AQ_TABLE&apos;,</span><br><span class="line">    queue_type =&gt; sys.dbms_aqadm.normal_queue,</span><br><span class="line">    max_retries =&gt; 5,</span><br><span class="line">    retry_delay =&gt; 120,</span><br><span class="line">    retention_time =&gt; 0,</span><br><span class="line">    comment =&gt; &apos;主键码变化队列&apos;);</span><br><span class="line">end;</span><br><span class="line">/</span><br></pre></td></tr></table></figure>
+<h3 id="4-创建存储过程"><a href="#4-创建存储过程" class="headerlink" title="4 创建存储过程"></a>4 创建存储过程</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">CREATE OR REPLACE PROCEDURE ENQUEUE_CATALOG_AQ(main_Key   NUMBER,</span><br><span class="line">                                               table_name NVARCHAR2,</span><br><span class="line">                                               operation  number) authid current_user is</span><br><span class="line">begin</span><br><span class="line">  declare</span><br><span class="line">    text               varchar2(200);</span><br><span class="line">    message            sys.aq$_jms_text_message;</span><br><span class="line">    enqueue_options    dbms_aq.enqueue_options_t;</span><br><span class="line">    message_properties dbms_aq.message_properties_t;</span><br><span class="line">    msgid              raw(16);</span><br><span class="line">    row_count          number;</span><br><span class="line">    select_count_str   VARCHAR2(800) := &apos;&apos;;</span><br><span class="line">    v_errmsg           varchar2(1000);</span><br><span class="line">  begin</span><br><span class="line">    message := sys.aq$_jms_text_message.construct;</span><br><span class="line">  </span><br><span class="line">    message.set_type(&apos;&apos;);</span><br><span class="line">    message.set_userid(&apos;gdlisnet&apos;);</span><br><span class="line">    message.set_appid(&apos;plsql_enq&apos;);</span><br><span class="line">    message.set_groupid(&apos;&apos;);</span><br><span class="line">  </span><br><span class="line">    text := &apos;&#123;&apos; || &apos;&quot;mainKey&quot;:&apos; || main_Key || &apos;,&apos; || &apos;&quot;tableName&quot;:&quot;&apos; ||</span><br><span class="line">            table_name || &apos;&quot;,&apos; || &apos;&quot;operation&quot;:&apos; || operation || &apos;&#125;&apos;;</span><br><span class="line">    message.set_text(text);</span><br><span class="line">  </span><br><span class="line">    select_count_str := &apos;select count(*) as raw_count from catalog_aq_table t where instr(t.user_data.text_vc,:1)&gt;0&apos;;</span><br><span class="line">    EXECUTE IMMEDIATE select_count_str</span><br><span class="line">      into row_count</span><br><span class="line">      using text;</span><br><span class="line">    --prc_wlf_sys_writelog(2, 4, &apos;ENQUEUE_CATALOG_AQ&apos;, row_count, &apos;&apos;);</span><br><span class="line">    if (row_count = 0) then</span><br><span class="line">      dbms_aq.enqueue(queue_name         =&gt; &apos;GDLISNET.CATALOG_AQ&apos;,</span><br><span class="line">                      enqueue_options    =&gt; enqueue_options,</span><br><span class="line">                      message_properties =&gt; message_properties,</span><br><span class="line">                      payload            =&gt; message,</span><br><span class="line">                      msgid              =&gt; msgid);</span><br><span class="line">    end if;</span><br><span class="line">  </span><br><span class="line">    commit;</span><br><span class="line">  EXCEPTION</span><br><span class="line">    when others then</span><br><span class="line">      /*v_errmsg := &apos;sqlexception~~sqlcode:&apos; || to_char(sqlcode) ||</span><br><span class="line">       &apos; sqlstate:&apos; || substr(sqlerrm, 1, 512);</span><br><span class="line">      prc_wlf_sys_writelog(2, 4, &apos;ENQUEUE_CATALOG_AQ&apos;, v_errmsg, &apos;&apos;);*/</span><br><span class="line">      DBMS_OUTPUT.PUT_LINE(&apos;你的数据更新语句失败了!&apos;);</span><br><span class="line">  end;</span><br><span class="line">end ENQUEUE_CATALOG_AQ;</span><br></pre></td></tr></table></figure>
+<h3 id="5-启动队列"><a href="#5-启动队列" class="headerlink" title="5 启动队列"></a>5 启动队列</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">begin</span><br><span class="line">  dbms_aqadm.start_queue(queue_name =&gt; &apos;CATALOG_AQ&apos;);</span><br><span class="line">end;</span><br></pre></td></tr></table></figure>
+<h3 id="6-停止队列"><a href="#6-停止队列" class="headerlink" title="6 停止队列"></a>6 停止队列</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">begin</span><br><span class="line">  dbms_aqadm.stop_queue(queue_name =&gt; &apos;CATALOG_AQ&apos;);</span><br><span class="line">end;</span><br></pre></td></tr></table></figure>
+<h3 id="7-入队测试"><a href="#7-入队测试" class="headerlink" title="7 入队测试"></a>7 入队测试</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">begin</span><br><span class="line">  enqueue_catalog_aq(ROW_ID     =&gt; &apos;1111&apos;,</span><br><span class="line">                     table_name =&gt; &apos;馆藏书目库&apos;,</span><br><span class="line">                     operation  =&gt; 4);</span><br><span class="line">end;</span><br><span class="line"></span><br><span class="line">select * from catalog_aq_table;</span><br></pre></td></tr></table></figure>
+<h3 id="8-出队"><a href="#8-出队" class="headerlink" title="8 出队"></a>8 出队</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">SET SERVEROUTPUT ON</span><br><span class="line">DECLARE</span><br><span class="line">dequeue_options     DBMS_AQ.dequeue_options_t;</span><br><span class="line">message_properties  DBMS_AQ.message_properties_t;</span><br><span class="line">message_handle      RAW(16);</span><br><span class="line">message             sys.aq$_jms_text_message;</span><br><span class="line">text  VARCHAR2(200);</span><br><span class="line">BEGIN</span><br><span class="line">   dequeue_options.navigation := DBMS_AQ.FIRST_MESSAGE;</span><br><span class="line">   DBMS_AQ.DEQUEUE(</span><br><span class="line">      queue_name          =&gt;     &apos;gdlisnet.CATALOG_AQ&apos;,</span><br><span class="line">      dequeue_options     =&gt;     dequeue_options,</span><br><span class="line">      message_properties  =&gt;     message_properties,</span><br><span class="line">      payload             =&gt;     message,</span><br><span class="line">      msgid               =&gt;     message_handle);</span><br><span class="line">   message.get_text(text);</span><br><span class="line">   DBMS_OUTPUT.PUT_LINE(&apos;Text: &apos;||text);</span><br><span class="line">   COMMIT;</span><br><span class="line">END;</span><br><span class="line">/</span><br></pre></td></tr></table></figure>
+<h3 id="9-删除队列顺序"><a href="#9-删除队列顺序" class="headerlink" title="9 删除队列顺序"></a>9 删除队列顺序</h3><p>停止队列–》删除队列-》删除queue_table</p>
+<h1 id="注册表变化通知（DCN）"><a href="#注册表变化通知（DCN）" class="headerlink" title="注册表变化通知（DCN）"></a>注册表变化通知（DCN）</h1><p>此部分只通知insert和update 变化</p>
+<h3 id="1-用户授权-1"><a href="#1-用户授权-1" class="headerlink" title="1 用户授权"></a>1 用户授权</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">CONNECT / AS SYSDBA;</span><br><span class="line">GRANT CHANGE NOTIFICATION TO gdlisnet;</span><br><span class="line">GRANT EXECUTE ON DBMS_CHANGE_NOTIFICATION TO gdlisnet;</span><br></pre></td></tr></table></figure>
+<h3 id="2-修改用户线程数"><a href="#2-修改用户线程数" class="headerlink" title="2 修改用户线程数"></a>2 修改用户线程数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">CONNECT / AS SYSDBA;</span><br><span class="line">--Rem Enable job queue processes to receive notifications.</span><br><span class="line">ALTER SYSTEM SET &quot;job_queue_processes&quot;=2;</span><br></pre></td></tr></table></figure>
+<h3 id="3-创建存储过程"><a href="#3-创建存储过程" class="headerlink" title="3 创建存储过程"></a>3 创建存储过程</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">CREATE OR REPLACE PROCEDURE chnf_callback(ntfnds IN cq_notification$_descriptor) AS</span><br><span class="line">  regid            NUMBER;</span><br><span class="line">  tbname           VARCHAR2(60);</span><br><span class="line">  event_type       NUMBER;</span><br><span class="line">  numtables        NUMBER;</span><br><span class="line">  operation_type   NUMBER;</span><br><span class="line">  numrows          NUMBER;</span><br><span class="line">  row_id           VARCHAR2(20);</span><br><span class="line">  mainKey          NUMBER;</span><br><span class="line">  selectMainKeyStr VARCHAR2(800) := &apos;&apos;;</span><br><span class="line">BEGIN</span><br><span class="line">  regid      := ntfnds.registration_id;</span><br><span class="line">  numtables  := ntfnds.numtables;</span><br><span class="line">  event_type := ntfnds.event_type;</span><br><span class="line"></span><br><span class="line">  --INSERT INTO nfevents VALUES (regid, event_type);</span><br><span class="line">  IF (event_type = DBMS_CHANGE_NOTIFICATION.EVENT_OBJCHANGE) THEN</span><br><span class="line">    FOR i IN 1 .. numtables LOOP</span><br><span class="line">      tbname         := ntfnds.table_desc_array(i).table_name;</span><br><span class="line">      operation_type := ntfnds.table_desc_array(I) . Opflags;</span><br><span class="line">      --INSERT INTO nftablechanges VALUES (regid, tbname, operation_type);</span><br><span class="line">      /* Send the table name and operation_type to client side listener using UTL_HTTP */</span><br><span class="line">      /* If interested in the rowids, obtain them as follows */</span><br><span class="line">      IF (bitand(operation_type, DBMS_CHANGE_NOTIFICATION.ALL_ROWS) = 0) THEN</span><br><span class="line">        numrows := ntfnds.table_desc_array(i).numrows;</span><br><span class="line">      ELSE</span><br><span class="line">        numrows := 0; /* ROWID INFO NOT AVAILABLE */</span><br><span class="line">      END IF;</span><br><span class="line">    </span><br><span class="line">      /* The body of the loop is not executed when numrows is ZERO */</span><br><span class="line">      FOR j IN 1 .. numrows LOOP</span><br><span class="line">        Row_id := ntfnds.table_desc_array(i).row_desc_array(j).row_id;</span><br><span class="line">        --INSERT INTO nfrowchanges VALUES (regid, tbname, Row_id);</span><br><span class="line">        selectMainKeyStr := &apos;select 主键码 from &apos; || tbname ||</span><br><span class="line">                            &apos; where rowid=:1&apos;;</span><br><span class="line">        EXECUTE IMMEDIATE selectMainKeyStr</span><br><span class="line">          into mainKey</span><br><span class="line">          using row_id;</span><br><span class="line">        gdlisnet.enqueue_catalog_aq(ROW_ID     =&gt; mainKey,</span><br><span class="line">                                    table_name =&gt; tbname,</span><br><span class="line">                                    operation  =&gt; operation_type);</span><br><span class="line">        /* optionally Send out row_ids to client side listener using UTL_HTTP; */</span><br><span class="line">      END LOOP;</span><br><span class="line">    </span><br><span class="line">    END LOOP;</span><br><span class="line">  END IF;</span><br><span class="line">  COMMIT;</span><br><span class="line">END;</span><br></pre></td></tr></table></figure>
+<h3 id="4-注册"><a href="#4-注册" class="headerlink" title="4 注册"></a>4 注册</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">DECLARE</span><br><span class="line">  REGDS             CQ_NOTIFICATION$_REG_INFO;</span><br><span class="line">  regid             NUMBER;</span><br><span class="line">  mgr_id            NUMBER;</span><br><span class="line">  dept_id           NUMBER;</span><br><span class="line">  qosflags          NUMBER;</span><br><span class="line">  operations_filter NUMBER;</span><br><span class="line">BEGIN</span><br><span class="line">  qosflags          := DBMS_CHANGE_NOTIFICATION.QOS_RELIABLE +</span><br><span class="line">                       DBMS_CHANGE_NOTIFICATION.QOS_ROWIDS;</span><br><span class="line">  operations_filter := DBMS_CHANGE_NOTIFICATION.INSERTOP +</span><br><span class="line">                       DBMS_CHANGE_NOTIFICATION.UPDATEOP;</span><br><span class="line">  REGDS             := cq_notification$_reg_info(&apos;chnf_callback&apos;,</span><br><span class="line">                                                 qosflags,</span><br><span class="line">                                                 0,</span><br><span class="line">                                                 operations_filter,</span><br><span class="line">                                                 0);</span><br><span class="line">  regid             := DBMS_CHANGE_NOTIFICATION.NEW_REG_START(REGDS);</span><br><span class="line">  SELECT 主键码 INTO mgr_id FROM 馆藏书目库 WHERE rownum = 1;</span><br><span class="line">  SELECT 主键码 INTO mgr_id FROM 馆藏典藏库 WHERE rownum = 1;</span><br><span class="line">  SELECT 主键码 INTO mgr_id FROM 采购库 WHERE rownum = 1;</span><br><span class="line">  DBMS_CHANGE_NOTIFICATION.REG_END;</span><br><span class="line">END;</span><br></pre></td></tr></table></figure>
+<h3 id="5-解除注册"><a href="#5-解除注册" class="headerlink" title="5 解除注册"></a>5 解除注册</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">call DBMS_CHANGE_NOTIFICATION.DEREGISTER (regid IN NUMBER);</span><br></pre></td></tr></table></figure>
+<h1 id="存储过程增加日志方法"><a href="#存储过程增加日志方法" class="headerlink" title="存储过程增加日志方法"></a>存储过程增加日志方法</h1><h3 id="1-创建日志表"><a href="#1-创建日志表" class="headerlink" title="1 创建日志表"></a>1 创建日志表</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">-- Create table</span><br><span class="line">create table TBL_WLF_SYS_LOG</span><br><span class="line">(</span><br><span class="line">  s_time     VARCHAR2(32) not null,</span><br><span class="line">  s_level    VARCHAR2(32),</span><br><span class="line">  s_procname VARCHAR2(64),</span><br><span class="line">  s_msg      VARCHAR2(4000),</span><br><span class="line">  s_advice   VARCHAR2(1024)</span><br><span class="line">)</span><br><span class="line">tablespace GDLISNET_TABLE</span><br><span class="line">  pctfree 10</span><br><span class="line">  initrans 1</span><br><span class="line">  maxtrans 255</span><br><span class="line">  storage</span><br><span class="line">  (</span><br><span class="line">    initial 64K</span><br><span class="line">    next 1M</span><br><span class="line">    minextents 1</span><br><span class="line">    maxextents unlimited</span><br><span class="line">  );</span><br><span class="line">-- Add comments to the table </span><br><span class="line">comment on table TBL_WLF_SYS_LOG</span><br><span class="line">  is &apos;存储过程日志表&apos;;</span><br><span class="line">-- Add comments to the columns </span><br><span class="line">comment on column TBL_WLF_SYS_LOG.s_time</span><br><span class="line">  is &apos;操作时间&apos;;</span><br><span class="line">comment on column TBL_WLF_SYS_LOG.s_level</span><br><span class="line">  is &apos;操作级别&apos;;</span><br><span class="line">comment on column TBL_WLF_SYS_LOG.s_procname</span><br><span class="line">  is &apos;执行存储过程名称&apos;;</span><br><span class="line">comment on column TBL_WLF_SYS_LOG.s_msg</span><br><span class="line">  is &apos;错误信息&apos;;</span><br><span class="line">comment on column TBL_WLF_SYS_LOG.s_advice</span><br><span class="line">  is &apos;建议信息&apos;;</span><br></pre></td></tr></table></figure>
+<h3 id="创建写日志存储过程"><a href="#创建写日志存储过程" class="headerlink" title="创建写日志存储过程"></a>创建写日志存储过程</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">CREATE OR REPLACE PROCEDURE prc_wlf_sys_writelog(i_flag       INTEGER,</span><br><span class="line">                                                          i_id         INTEGER,</span><br><span class="line">                                                          str_procname varchar2,</span><br><span class="line">                                                          str_msg      varchar2,</span><br><span class="line">                                                          str_advice   varchar2) IS</span><br><span class="line">  -- 操作时间</span><br><span class="line">  str_time varchar2(32);</span><br><span class="line">  -- 操作级别</span><br><span class="line">  str_level varchar2(32);</span><br><span class="line">  -- 执行存储过程名称</span><br><span class="line">  p_procname varchar2(1024);</span><br><span class="line">  -- 错误信息，或者记录信息</span><br><span class="line">  p_msg varchar2(1024);</span><br><span class="line">  -- 建议信息</span><br><span class="line">  p_advice varchar2(1024);</span><br><span class="line"></span><br><span class="line">BEGIN</span><br><span class="line">  IF (i_flag = 2 AND i_id &gt;= 1 AND i_id &lt;= 4) THEN</span><br><span class="line">    CASE</span><br><span class="line">      WHEN i_id = 1 THEN</span><br><span class="line">        str_level := &apos;log&apos;;</span><br><span class="line">      WHEN i_id = 2 THEN</span><br><span class="line">        str_level := &apos;debug&apos;;</span><br><span class="line">      WHEN i_id = 3 THEN</span><br><span class="line">        str_level := &apos;alarm&apos;;</span><br><span class="line">      ELSE</span><br><span class="line">        str_level := &apos;error&apos;;</span><br><span class="line">    END CASE;</span><br><span class="line">    p_procname := str_procname;</span><br><span class="line">    p_msg      := str_msg;</span><br><span class="line">    p_advice   := str_advice;</span><br><span class="line">  ELSE</span><br><span class="line">    str_level  := &apos;error&apos;;</span><br><span class="line">    p_procname := &apos;p_public_writelog&apos;;</span><br><span class="line">    p_msg      := &apos;writelog_error&apos;;</span><br><span class="line">    p_advice   := &apos;&apos;;</span><br><span class="line">  END IF;</span><br><span class="line"></span><br><span class="line">  str_time := to_char(SYSDATE, &apos;yyyy-mm-dd hh24:mi:ss&apos;);</span><br><span class="line"></span><br><span class="line">  INSERT INTO tbl_wlf_sys_log</span><br><span class="line">    (s_time, s_level, s_procname, s_msg, s_advice)</span><br><span class="line">  VALUES</span><br><span class="line">    (str_time, str_level, p_procname, p_msg, p_advice);</span><br><span class="line">  COMMIT;</span><br><span class="line">END prc_wlf_sys_writelog;</span><br></pre></td></tr></table></figure>
+<h3 id="调用"><a href="#调用" class="headerlink" title="调用"></a>调用</h3><p>存储过程中加入异常捕获，并调用<code>prc_wlf_sys_writelog</code>做日志调用<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">EXCEPTION</span><br><span class="line">    when others then</span><br><span class="line">      v_errmsg := &apos;sqlexception~~sqlcode:&apos; || to_char(sqlcode) ||</span><br><span class="line">       &apos; sqlstate:&apos; || substr(sqlerrm, 1, 512);</span><br><span class="line">      prc_wlf_sys_writelog(2, 4, &apos;ENQUEUE_CATALOG_AQ&apos;, v_errmsg, &apos;&apos;);</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Oracle/" rel="tag"># Oracle</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/03/28/Hexo-简单使用/" rel="next" title="Hexo 简单使用">
+                <i class="fa fa-chevron-left"></i> Hexo 简单使用
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/03/31/Elasticsearch-查询语法/" rel="prev" title="Elasticsearch 查询语法">
+                Elasticsearch 查询语法 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/header.jpg" alt="Gary">
+            
+              <p class="site-author-name" itemprop="name">Gary</p>
+              <div class="site-description motion-element" itemprop="description">主攻JAVA。</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">5</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/legatoplay" title="GitHub &rarr; https://github.com/legatoplay" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#设置消息队列"><span class="nav-number">1.</span> <span class="nav-text">设置消息队列</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-用户授权"><span class="nav-number">1.0.1.</span> <span class="nav-text">1 用户授权</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-创建队列表"><span class="nav-number">1.0.2.</span> <span class="nav-text">2 创建队列表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-创建队列"><span class="nav-number">1.0.3.</span> <span class="nav-text">3 创建队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-创建存储过程"><span class="nav-number">1.0.4.</span> <span class="nav-text">4 创建存储过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-启动队列"><span class="nav-number">1.0.5.</span> <span class="nav-text">5 启动队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-停止队列"><span class="nav-number">1.0.6.</span> <span class="nav-text">6 停止队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-入队测试"><span class="nav-number">1.0.7.</span> <span class="nav-text">7 入队测试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-出队"><span class="nav-number">1.0.8.</span> <span class="nav-text">8 出队</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#9-删除队列顺序"><span class="nav-number">1.0.9.</span> <span class="nav-text">9 删除队列顺序</span></a></li></ol></li></ol><li class="nav-item nav-level-1"><a class="nav-link" href="#注册表变化通知（DCN）"><span class="nav-number">2.</span> <span class="nav-text">注册表变化通知（DCN）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-用户授权-1"><span class="nav-number">2.0.1.</span> <span class="nav-text">1 用户授权</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-修改用户线程数"><span class="nav-number">2.0.2.</span> <span class="nav-text">2 修改用户线程数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-创建存储过程"><span class="nav-number">2.0.3.</span> <span class="nav-text">3 创建存储过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-注册"><span class="nav-number">2.0.4.</span> <span class="nav-text">4 注册</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-解除注册"><span class="nav-number">2.0.5.</span> <span class="nav-text">5 解除注册</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#存储过程增加日志方法"><span class="nav-number">3.</span> <span class="nav-text">存储过程增加日志方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-创建日志表"><span class="nav-number">3.0.1.</span> <span class="nav-text">1 创建日志表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建写日志存储过程"><span class="nav-number">3.0.2.</span> <span class="nav-text">创建写日志存储过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调用"><span class="nav-number">3.0.3.</span> <span class="nav-text">调用</span></a></li></ol></li></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gary</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/three/three.min.js"></script>
+
+  
+  <script src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.0"></script>
+
+  <script src="/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.0"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.0"></script>
+<script src="/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.0"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

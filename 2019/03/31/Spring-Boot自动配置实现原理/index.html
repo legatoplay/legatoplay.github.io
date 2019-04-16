@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-g.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-g.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="SpringBoot 自动配置主要通过 @EnableAutoConfiguration, @Conditional, @EnableConfigurationProperties 或者 @ConfigurationProperties等几个注解来进行自动配置完成的。 @EnableAutoConfiguration 开启自动配置，主要作用就是调用 Spring-Core 包的 loadFacto">
+<meta name="keywords" content="Spring Boot">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring Boot (一)：自动配置实现原理一">
+<meta property="og:url" content="https://legatoplay.github.io/2019/03/31/Spring-Boot自动配置实现原理/index.html">
+<meta property="og:site_name" content="Gary&#39;s Blog">
+<meta property="og:description" content="SpringBoot 自动配置主要通过 @EnableAutoConfiguration, @Conditional, @EnableConfigurationProperties 或者 @ConfigurationProperties等几个注解来进行自动配置完成的。 @EnableAutoConfiguration 开启自动配置，主要作用就是调用 Spring-Core 包的 loadFacto">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://legatoplay.github.io/2019/03/31/Spring-Boot自动配置实现原理/SpringBootApplication.png">
+<meta property="og:image" content="https://legatoplay.github.io/2019/03/31/Spring-Boot自动配置实现原理/SpringBootApplication-annotation.png">
+<meta property="og:image" content="https://legatoplay.github.io/2019/03/31/Spring-Boot自动配置实现原理/EnableAutoConfiguration.png">
+<meta property="og:updated_time" content="2019-04-16T06:33:18.577Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring Boot (一)：自动配置实现原理一">
+<meta name="twitter:description" content="SpringBoot 自动配置主要通过 @EnableAutoConfiguration, @Conditional, @EnableConfigurationProperties 或者 @ConfigurationProperties等几个注解来进行自动配置完成的。 @EnableAutoConfiguration 开启自动配置，主要作用就是调用 Spring-Core 包的 loadFacto">
+<meta name="twitter:image" content="https://legatoplay.github.io/2019/03/31/Spring-Boot自动配置实现原理/SpringBootApplication.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="https://legatoplay.github.io/2019/03/31/Spring-Boot自动配置实现原理/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Spring Boot (一)：自动配置实现原理一 | Gary's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Gary's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">7</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">4</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">5</span></a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://legatoplay.github.io/2019/03/31/Spring-Boot自动配置实现原理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Gary">
+      <meta itemprop="description" content="主攻JAVA。">
+      <meta itemprop="image" content="/images/header.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Gary's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Spring Boot (一)：自动配置实现原理一
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-31 22:02:23" itemprop="dateCreated datePublished" datetime="2019-03-31T22:02:23+08:00">2019-03-31</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-04-16 14:33:18" itemprop="dateModified" datetime="2019-04-16T14:33:18+08:00">2019-04-16</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Spring-Boot/" itemprop="url" rel="index"><span itemprop="name">Spring Boot</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="post-meta-item-icon">
+            <i class="fa fa-eye"></i>
+             阅读次数： 
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>SpringBoot 自动配置主要通过 <code>@EnableAutoConfiguration</code>, <code>@Conditional</code>, <code>@EnableConfigurationProperties</code> 或者 <code>@ConfigurationProperties</code>等几个注解来进行自动配置完成的。</p>
+<p><code>@EnableAutoConfiguration</code> 开启自动配置，主要作用就是调用 <code>Spring-Core</code> 包的 <code>loadFactoryNames()</code>，将 <code>autoconfig</code> 包里的已经写好的自动配置加载进来。  </p>
+<p><code>@Conditional</code> 条件注解，通过判断类路径下有没有相应配置的 <code>jar</code> 包来确定是否加载和自动配置这个类。  </p>
+<p><code>@EnableConfigurationProperties</code> 的作用就是，给自动配置提供具体的配置参数，只需要写在 <code>application.properties</code>或<code>application.yml</code> 中，就可以通过映射写入配置类的 <code>POJO</code> 属性中。</p>
+<a id="more"></a>
+<h3 id="EnableAutoConfiguration"><a href="#EnableAutoConfiguration" class="headerlink" title="@EnableAutoConfiguration"></a>@EnableAutoConfiguration</h3><p>事实上是通过通过Spring的<code>@Import</code>注释导入。</p>
+<p>SpringBoot启动类<code>@SpringBootApplication</code></p>
+<p><img src="/2019/03/31/Spring-Boot自动配置实现原理/SpringBootApplication.png" alt></p>
+<p>进入<code>@SpringBootApplication</code>注解类，发现使用了注解<code>@EnableAutoConfiguration</code></p>
+<p><img src="/2019/03/31/Spring-Boot自动配置实现原理/SpringBootApplication-annotation.png" alt></p>
+<p>最终发现<code>@EnableAutoConfiguration</code>里使用了Spring的<code>@Import</code>注解导入了<code>AutoConfigurationImportSelector</code>类</p>
+<p><img src="/2019/03/31/Spring-Boot自动配置实现原理/EnableAutoConfiguration.png" alt></p>
+<p>找到<code>selectImports()</code>方法，它调用了<code>getAutoConfigurationEntry</code>方法，<code>getAutoConfigurationEntry</code>方法又调用了<code>getCandidateConfigurations()</code>方法，这个方法又调用了spring-core包中的<code>SpringFactoriesLoader.loadFactoryNames</code>方法。这个方法的作用是，会加载所有JAR包中的<code>META-INF/spring.factories</code>文件，并加载其中以<code>EnableAutoConfiguration.class</code>全类名为key的自动配置文件类名列表</p>
+<h3 id="selectImports方法"><a href="#selectImports方法" class="headerlink" title="selectImports方法"></a><code>selectImports</code>方法</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> String[] selectImports(AnnotationMetadata annotationMetadata) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!isEnabled(annotationMetadata)) &#123;</span><br><span class="line">        <span class="keyword">return</span> NO_IMPORTS;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//得到注解信息</span></span><br><span class="line">    AutoConfigurationMetadata autoConfigurationMetadata = AutoConfigurationMetadataLoader</span><br><span class="line">        .loadMetadata(<span class="keyword">this</span>.beanClassLoader);</span><br><span class="line">    <span class="comment">//得到配置配置列表</span></span><br><span class="line">    AutoConfigurationEntry autoConfigurationEntry = getAutoConfigurationEntry(</span><br><span class="line">        autoConfigurationMetadata, annotationMetadata);</span><br><span class="line">    <span class="keyword">return</span> StringUtils.toStringArray(autoConfigurationEntry.getConfigurations());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="getAutoConfigurationEntry方法"><a href="#getAutoConfigurationEntry方法" class="headerlink" title="getAutoConfigurationEntry方法"></a><code>getAutoConfigurationEntry</code>方法</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* Return the &#123;<span class="doctag">@link</span> AutoConfigurationEntry&#125; based on the &#123;<span class="doctag">@link</span> AnnotationMetadata&#125;</span></span><br><span class="line"><span class="comment">* of the importing &#123;<span class="doctag">@link</span> Configuration <span class="doctag">@Configuration</span>&#125; class.</span></span><br><span class="line"><span class="comment">* <span class="doctag">@param</span> autoConfigurationMetadata the auto-configuration metadata</span></span><br><span class="line"><span class="comment">* <span class="doctag">@param</span> annotationMetadata the annotation metadata of the configuration class</span></span><br><span class="line"><span class="comment">* <span class="doctag">@return</span> the auto-configurations that should be imported</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> AutoConfigurationEntry <span class="title">getAutoConfigurationEntry</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    AutoConfigurationMetadata autoConfigurationMetadata,</span></span></span><br><span class="line"><span class="function"><span class="params">    AnnotationMetadata annotationMetadata)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!isEnabled(annotationMetadata)) &#123;</span><br><span class="line">        <span class="keyword">return</span> EMPTY_ENTRY;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//得到注解属性</span></span><br><span class="line">    AnnotationAttributes attributes = getAttributes(annotationMetadata);</span><br><span class="line">    <span class="comment">//得到候选配置列表</span></span><br><span class="line">    List&lt;String&gt; configurations = getCandidateConfigurations(annotationMetadata,</span><br><span class="line">                                                             attributes);</span><br><span class="line">    <span class="comment">//去重</span></span><br><span class="line">    configurations = removeDuplicates(configurations);</span><br><span class="line">    <span class="comment">//排序注解配置的exclude或excludeName/读取配置spring.autoconfigure.exclude</span></span><br><span class="line">    Set&lt;String&gt; exclusions = getExclusions(annotationMetadata, attributes);</span><br><span class="line">    checkExcludedClasses(configurations, exclusions);</span><br><span class="line">    configurations.removeAll(exclusions);</span><br><span class="line">    <span class="comment">//调用 filter 进行过滤 OnBeanCondition/OnClassCondition/OnWebApplicationCondition</span></span><br><span class="line">    configurations = filter(configurations, autoConfigurationMetadata);</span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    fireAutoConfigurationImportEvents(configurations, exclusions);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> AutoConfigurationEntry(configurations, exclusions);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spring-Boot/" rel="tag"># Spring Boot</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/03/31/Elasticsearch-查询语法/" rel="next" title="Elasticsearch 查询语法">
+                <i class="fa fa-chevron-left"></i> Elasticsearch 查询语法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/header.jpg" alt="Gary">
+            
+              <p class="site-author-name" itemprop="name">Gary</p>
+              <div class="site-description motion-element" itemprop="description">主攻JAVA。</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">5</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/legatoplay" title="GitHub &rarr; https://github.com/legatoplay" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#EnableAutoConfiguration"><span class="nav-number">1.</span> <span class="nav-text">@EnableAutoConfiguration</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#selectImports方法"><span class="nav-number">2.</span> <span class="nav-text">selectImports方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#getAutoConfigurationEntry方法"><span class="nav-number">3.</span> <span class="nav-text">getAutoConfigurationEntry方法</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gary</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/three/three.min.js"></script>
+
+  
+  <script src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.0"></script>
+
+  <script src="/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.0"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.0"></script>
+<script src="/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.0"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
