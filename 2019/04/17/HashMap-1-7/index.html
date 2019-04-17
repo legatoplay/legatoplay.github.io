@@ -115,7 +115,7 @@
 <meta property="og:image" content="https://legatoplay.github.io/2019/04/17/HashMap-1-7/structure.png">
 <meta property="og:image" content="https://legatoplay.github.io/2019/04/17/HashMap-1-7/add%20and%20search.png">
 <meta property="og:image" content="https://legatoplay.github.io/2019/04/17/HashMap-1-7/Expansion.png">
-<meta property="og:updated_time" content="2019-04-17T06:40:03.848Z">
+<meta property="og:updated_time" content="2019-04-17T06:43:17.522Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HashMap实现原理及源码分析-JDK1.7">
 <meta name="twitter:description" content="摘自：https://www.cnblogs.com/chengxiao/p/6059914.html摘自：https://www.cnblogs.com/dijia478/p/8006713.html  数据结构&amp;emsp;&amp;emsp;HashMap中的数据结构是数组+单链表的组合，以键值对(key-value)的形式存储元素的，通过put()和get()方法储存和获取对象。 什么是哈希表（h">
@@ -387,7 +387,7 @@
                 
               
 
-              <time title="创建时间：2019-04-17 09:21:36 / 修改时间：14:40:03" itemprop="dateCreated datePublished" datetime="2019-04-17T09:21:36+08:00">2019-04-17</time>
+              <time title="创建时间：2019-04-17 09:21:36 / 修改时间：14:43:17" itemprop="dateCreated datePublished" datetime="2019-04-17T09:21:36+08:00">2019-04-17</time>
             
 
             
@@ -459,8 +459,7 @@
 <p>&emsp;&emsp;<strong>数组</strong>：采用一段连续的存储单元来存储数据。对于指定下标的查找，时间复杂度为O(1)；通过给定值进行查找，需要遍历数组，逐一比对给定关键字和数组元素，时间复杂度为O(n)，当然，对于有序数组，则可采用二分查找，插值查找，斐波那契查找等方式，可将查找复杂度提高为O(logn)；对于一般的插入删除操作，涉及到数组元素的移动，其平均复杂度也为O(n)</p>
 <p>&emsp;&emsp;<strong>线性链表</strong>：对于链表的新增，删除等操作（在找到指定操作位置后），仅需处理结点间的引用即可，时间复杂度为O(1)，而查找操作需要遍历链表逐一进行比对，复杂度为O(n)</p>
 <p>&emsp;&emsp;<strong>二叉树</strong>：对一棵相对平衡的有序二叉树，对其进行插入，查找，删除等操作，平均复杂度均为O(logn)。</p>
-<p>&emsp;&emsp;<strong>哈希表</strong>：相比上述几种数据结构，在哈希表中进行添加，删除，查找等操作，性能十分之高，不考虑哈希冲突的情况下，仅需一次定位即可完成，时间复杂度为O(1)，接下来我们就来看看哈希表是如何实现达到惊艳的常数阶O(1)的。</p>
-<p>&emsp;&emsp;我们知道，数据结构的物理存储结构只有两种：<strong>顺序存储结构</strong>和<strong>链式存储结构</strong>（像栈，队列，树，图等是从逻辑结构去抽象的，映射到内存中，也这两种物理组织形式），而在上面我们提到过，在数组中根据下标查找某个元素，一次定位就可以达到，哈希表利用了这种特性，<strong>哈希表的主干就是数组</strong>。</p>
+<p>&emsp;&emsp;<strong>哈希表</strong>：相比上述几种数据结构，在哈希表中进行添加，删除，查找等操作，性能十分之高，不考虑哈希冲突的情况下，仅需一次定位即可完成，时间复杂度为O(1)，接下来我们就来看看哈希表是如何实现达到惊艳的常数阶O(1)的。<br><a id="more"></a><br>&emsp;&emsp;我们知道，数据结构的物理存储结构只有两种：<strong>顺序存储结构</strong>和<strong>链式存储结构</strong>（像栈，队列，树，图等是从逻辑结构去抽象的，映射到内存中，也这两种物理组织形式），而在上面我们提到过，在数组中根据下标查找某个元素，一次定位就可以达到，哈希表利用了这种特性，<strong>哈希表的主干就是数组</strong>。</p>
 <p>&emsp;&emsp;比如我们要新增或查找某个元素，我们通过把当前元素的关键字 通过某个函数映射到数组中的某个位置，通过数组下标一次定位就可完成操作。</p>
 <p>　　　　　　　　<strong>存储位置 = f(关键字)</strong></p>
 <p>&emsp;&emsp;其中，这个函数f一般称为<strong>哈希函数</strong>，这个函数的设计好坏会直接影响到哈希表的优劣。举个例子，比如我们要在哈希表中执行插入操作：</p>
