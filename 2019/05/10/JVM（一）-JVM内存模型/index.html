@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-g.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-g.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="摘自：https://www.cnblogs.com/cjsblog/p/9850300.html摘自：https://blog.csdn.net/itermeng/article/details/74977888摘自：(https://blog.csdn.net/laomo_bible/article/details/83067810  运行时区域内存&amp;emsp;&amp;emsp;Java虚拟机在执">
+<meta name="keywords" content="基础知识,JAVA">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM（一）:JVM内存模型">
+<meta property="og:url" content="https://legatoplay.github.io/2019/05/10/JVM（一）-JVM内存模型/index.html">
+<meta property="og:site_name" content="Gary&#39;s Blog">
+<meta property="og:description" content="摘自：https://www.cnblogs.com/cjsblog/p/9850300.html摘自：https://blog.csdn.net/itermeng/article/details/74977888摘自：(https://blog.csdn.net/laomo_bible/article/details/83067810  运行时区域内存&amp;emsp;&amp;emsp;Java虚拟机在执">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://legatoplay.github.io/2019/05/10/JVM（一）-JVM内存模型/jvm01.png">
+<meta property="og:updated_time" content="2019-05-10T06:57:02.678Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JVM（一）:JVM内存模型">
+<meta name="twitter:description" content="摘自：https://www.cnblogs.com/cjsblog/p/9850300.html摘自：https://blog.csdn.net/itermeng/article/details/74977888摘自：(https://blog.csdn.net/laomo_bible/article/details/83067810  运行时区域内存&amp;emsp;&amp;emsp;Java虚拟机在执">
+<meta name="twitter:image" content="https://legatoplay.github.io/2019/05/10/JVM（一）-JVM内存模型/jvm01.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="https://legatoplay.github.io/2019/05/10/JVM（一）-JVM内存模型/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>JVM（一）:JVM内存模型 | Gary's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Gary's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">9</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">9</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">8</span></a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://legatoplay.github.io/2019/05/10/JVM（一）-JVM内存模型/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Gary">
+      <meta itemprop="description" content="主攻JAVA。">
+      <meta itemprop="image" content="/images/header.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Gary's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">JVM（一）:JVM内存模型
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-05-10 11:24:12 / 修改时间：14:57:02" itemprop="dateCreated datePublished" datetime="2019-05-10T11:24:12+08:00">2019-05-10</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JAVA/" itemprop="url" rel="index"><span itemprop="name">JAVA</span></a></span>
+
+                
+                
+                  ，
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JAVA/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="post-meta-item-icon">
+            <i class="fa fa-eye"></i>
+             阅读次数： 
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>摘自：<a href="https://www.cnblogs.com/cjsblog/p/9850300.html" target="_blank" rel="noopener">https://www.cnblogs.com/cjsblog/p/9850300.html</a><br>摘自：<a href="https://blog.csdn.net/itermeng/article/details/74977888" target="_blank" rel="noopener">https://blog.csdn.net/itermeng/article/details/74977888</a><br>摘自：<a href="https://blog.csdn.net/laomo_bible/article/details/83067810" target="_blank" rel="noopener">(https://blog.csdn.net/laomo_bible/article/details/83067810</a></p>
+</blockquote>
+<h1 id="运行时区域内存"><a href="#运行时区域内存" class="headerlink" title="运行时区域内存"></a>运行时区域内存</h1><p>&emsp;&emsp;Java虚拟机在执行Java程序时会将其管理的区域划分为不同的数据区域，不同区域之间拥有各自用途、创建和销毁的时间，有的区域随着虚拟机进程的启动而存在，而有的区域则依赖用户线程的生命周期。</p>
+<p><img src="/2019/05/10/JVM（一）-JVM内存模型/jvm01.png" alt></p>
+<style>
+table th:first-of-type {
+  width: 12%;
+}
+  table th {
+    font-weight: bold;
+    text-align: center !important;
+    background: rgba(158,188,226,0.2); 
+  white-space: nowrap; 
+}
+</style>
+
+<table>
+<thead>
+<tr>
+<th style="text-align:left">名称</th>
+<th style="text-align:left">特征</th>
+<th style="text-align:left">作用</th>
+<th style="text-align:left">配置参数</th>
+<th style="text-align:left">异常</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">程序计数器</td>
+<td style="text-align:left">占用内存小，线程私有，生命周期与线程相同</td>
+<td style="text-align:left">大致为字节码行号指示器</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">无</td>
+</tr>
+<tr>
+<td style="text-align:left">虚拟机栈</td>
+<td style="text-align:left">线程私有，生命周期与线程相同，使用连续的内存空间</td>
+<td style="text-align:left">Java 方法执行的内存模型，存储局部变量表、操作栈、动态链接、方法出口等信息</td>
+<td style="text-align:left">-Xss</td>
+<td style="text-align:left">StackOverflowError<br> OutOfMemoryError</td>
+</tr>
+<tr>
+<td style="text-align:left">java堆</td>
+<td style="text-align:left">线程共享，生命周期与虚拟机相同，可以不使用连续的内存地址</td>
+<td style="text-align:left">保存对象实例，所有对象实例（包括数组）都要在堆上分配</td>
+<td style="text-align:left">-Xms<br>-Xsx<br>-Xmn</td>
+<td style="text-align:left">OutOfMemoryError</td>
+</tr>
+<tr>
+<td style="text-align:left">方法区</td>
+<td style="text-align:left">线程共享，生命周期与虚拟机相同，可以不使用连续的内存地址</td>
+<td style="text-align:left">存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">OutOfMemoryError</td>
+</tr>
+<tr>
+<td style="text-align:left">运行时常量池</td>
+<td style="text-align:left">方法区的一部分，具有动态性</td>
+<td style="text-align:left">存放字面量及符号引用</td>
+<td style="text-align:left">&nbsp;</td>
+<td style="text-align:left">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<a id="more"></a>
+<hr>
+<h2 id="1-程序计数器"><a href="#1-程序计数器" class="headerlink" title="1. 程序计数器"></a>1. 程序计数器</h2><h3 id="（1）含义作用"><a href="#（1）含义作用" class="headerlink" title="（1）含义作用"></a>（1）含义作用</h3><p>&emsp;&emsp;<strong>程序计数器（Program Counter Register）</strong>是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。在虚拟机概念模型中，字节码解释器工作时就是通过改变计数器的值来选取下一条需要执行的字节码指令，分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖计数器。</p>
+<h3 id="（2）计数器与多线程"><a href="#（2）计数器与多线程" class="headerlink" title="（2）计数器与多线程"></a>（2）计数器与多线程</h3><p>&emsp;&emsp;由于JVM的多线程时通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）都只会执行一条线程中的指令。所以，为了线程切换后能恢复到正确的执行位置，每条线程需要一个独立的程序计数器，各线程之间计数器互不影响、独立存储，相当于是一块“<code>线程私有</code>”的内存。</p>
+<h3 id="（3）虚拟机规范记录（有关异常）"><a href="#（3）虚拟机规范记录（有关异常）" class="headerlink" title="（3）虚拟机规范记录（有关异常）"></a><strong>（3）虚拟机规范记录（有关异常）</strong></h3><p>&emsp;&emsp;若线程正在执行的是一个<strong>Java</strong>方法，这个计数器记录的时正在执行的虚拟机字节码指令的地址；若执行的是<strong>Native</strong>方法，则计数器为空（Undefined）。注意：此内存区域是唯一一个在Java虚拟机规范中没有规定任何 <strong>OutOfMemoryError</strong>情况的区域。</p>
+<hr>
+<h2 id="2-Java虚拟机栈"><a href="#2-Java虚拟机栈" class="headerlink" title="2 . Java虚拟机栈"></a>2 . Java虚拟机栈</h2><h3 id="（1）含义作用-1"><a href="#（1）含义作用-1" class="headerlink" title="（1）含义作用"></a><strong>（1）含义作用</strong></h3><p>&emsp;&emsp;同程序计数器相同，<strong>Java虚拟机栈（Java Virtual Machine Stacks）</strong>也是<code>线程私有</code>的，它的生命周期与线程相同。虚拟机栈描述的是Java方法执行的内存模型：每个方法在执行的同时都会创建一个栈帧用于存储<strong>局部变量表、操作数栈、动态链接、方法出口</strong>等信息。每一个方法从调用直至执行完成的过程，会对应一个栈帧在虚拟机栈中入栈到出栈的过程。</p>
+<h3 id="（2）Java内存区分误区"><a href="#（2）Java内存区分误区" class="headerlink" title="（2）Java内存区分误区"></a><strong>（2）Java内存区分误区</strong></h3><p>&emsp;&emsp;大多数人以为Java内存区分为堆内存（<code>Heap</code>）和栈内存（<code>Stack</code>），这是一种误区，Java内存区域的划分远比这种粗糙的分法更加复杂。这种划分方式广泛流传是由于大多数开发者关注与对象内存分配关系最密切的内存区域就是这两块，有关“堆”的知识后续载提，这里的“栈”指的就是虚拟机栈，或者说是虚拟机栈中的变量表部分。</p>
+<h3 id="（3）虚拟机栈中的局部变量表"><a href="#（3）虚拟机栈中的局部变量表" class="headerlink" title="（3）虚拟机栈中的局部变量表"></a><strong>（3）虚拟机栈中的局部变量表</strong></h3><p>&emsp;&emsp;局部变量表中存放了编译期可知的</p>
+<ul>
+<li><p><strong>八大数据类型</strong>（boolean、byte、char、short、int、float、long、double）。</p>
+</li>
+<li><p><strong>对象引用</strong>（reference类型，它不等于对象本身，可能是一个指向对象起始地址的指针，也可能是指向一个代表对象的句柄或其他与此对象相关的位置）</p>
+</li>
+<li><p><strong>returnAddress类型</strong>（指向了一条字节码指令的地址）</p>
+</li>
+</ul>
+<p>&emsp;&emsp;其中64位长度的<code>long</code>和<code>double</code>类型的数据会占用2个局部变量空间（Slot），其余数据类型只占用1个。<strong>局部变量表所需的内存控件在编译期间完成分配</strong>，当进入一个方法时，这个方法需要在帧中分配多大的局部变量空间是完全确定的，在方法运行期间不会改变局部变量表的大小。</p>
+<h3 id="（4）虚拟机规范记录（有关异常）"><a href="#（4）虚拟机规范记录（有关异常）" class="headerlink" title="（4）虚拟机规范记录（有关异常）"></a><strong>（4）虚拟机规范记录（有关异常）</strong></h3><p>&emsp;&emsp;在Java虚拟机规范中，对这个区域规定了两种异常状况：</p>
+<ul>
+<li>若线程请求的栈深度大于虚拟机所允许的深度，将抛出<strong>StackOverflowError</strong>异常。</li>
+<li>若虚拟机可以动态扩展（当前大部分Java虚拟机都可动态扩展，只不过Java虚拟机规范也允许固定长度的虚拟机栈），当扩展时无法申请到足够的内存，就会抛出<strong>OutOfMemoryError</strong>异常。</li>
+</ul>
+<h2 id="3-本地方法栈"><a href="#3-本地方法栈" class="headerlink" title="3 . 本地方法栈"></a>3 . 本地方法栈</h2><h3 id="（1）含义作用-2"><a href="#（1）含义作用-2" class="headerlink" title="（1）含义作用"></a><strong>（1）含义作用</strong></h3><p><strong>&emsp;&emsp;本地方法栈（Native Method Stack）</strong>与虚拟机栈所发挥的作用类似，它们之间的区别是：虚拟机栈为虚拟机执行<strong>Java</strong>方法（也就是字节码）服务，而本地方法栈则为虚拟机使用到的<strong>Native</strong>方法服务。</p>
+<h3 id="（2）虚拟机规范记录（有关异常）"><a href="#（2）虚拟机规范记录（有关异常）" class="headerlink" title="（2）虚拟机规范记录（有关异常）"></a><strong>（2）虚拟机规范记录（有关异常）</strong></h3><p>&emsp;&emsp;在虚拟机规范中对本地方法栈中使用的语言、方式和数据结构并<code>无强制规定</code>，因此具体的虚拟机可实现它。甚至有的虚拟机（Sun HotSpot虚拟机）直接把本地方法栈和虚拟机栈合二为一。</p>
+<p>&emsp;&emsp;与虚拟机一样，本地方法栈会抛出<strong>StackOverflowError</strong>和<strong>OutOfMemoryError</strong>异常。</p>
+<h2 id="4-Java堆"><a href="#4-Java堆" class="headerlink" title="4 . Java堆"></a>4 . Java堆</h2><h3 id="（1）含义作用-3"><a href="#（1）含义作用-3" class="headerlink" title="（1）含义作用"></a><strong>（1）含义作用</strong></h3><p>&emsp;&emsp;对于大多数应用而言，<strong>Java堆（Heap）</strong>是Java虚拟机所管理的内存中最大的一块，它是被<strong>所有线程共享</strong>的一块内存区域，在虚拟机启动时创建。<strong>此内存区域唯一的目的是存放对象实例</strong>，几乎所有的对象实例都在这里分配内存。Java虚拟机规范中描述道：所有的对象实例以及数组都要在堆上分配，但是随着JIT编译器的发展和逃逸分析技术逐渐成熟，栈上分配、标量替换优化技术将会导致一些微妙的变化发生，<em>所有的对象都在堆上分配的定论也并不“绝对”了</em>。</p>
+<h3 id="（2）Java堆与垃圾回收器"><a href="#（2）Java堆与垃圾回收器" class="headerlink" title="（2）Java堆与垃圾回收器"></a><strong>（2）Java堆与垃圾回收器</strong></h3><p><strong>&emsp;&emsp;Java堆</strong>是垃圾回收器管理的主要区域，因此被称为“GC堆”（<code>Garbage Collected Heap</code>）。</p>
+<p>&emsp;&emsp;从内存回收角度看，由于目前收集器基本采用分代收集算法，所以Java堆可细分为：新生代和老年代。<br>&emsp;&emsp;从内存分配角度来看，线程共享的Java堆中可能划分出多个线程私有的分配缓冲区（TLAB：Thread Local Allocation Buffer）。<br>&emsp;&emsp;不过无论如何划分，都与存放内容无关，无论哪个区域，存放的都是对象实例，进一步划分目的是为了更好地回收内存，或者是更快地分配内存。此节仅对内存区域作用进行学习，Java堆上各个区域分配回收等细节与内存分配策略有关，后续讲解。</p>
+<h3 id="（3）虚拟机规范记录（有关异常）-1"><a href="#（3）虚拟机规范记录（有关异常）-1" class="headerlink" title="（3）虚拟机规范记录（有关异常）"></a>（3）虚拟机规范记录（有关异常）</h3><p>&emsp;&emsp;根据Java虚拟机规范的规定，Java堆可以处于物理上不连续的内存中，只要逻辑上是连续的即可，就像磁盘空间。在实现时，可以实现成固定大小或可扩展的，不过当前主流虚拟机是按照可扩展进行实现的（通过-Xmx和 -Xms控制）。</p>
+<p>&emsp;&emsp;若堆中没有内存完成实例分配，并且堆也无法扩展时，将会抛出<strong>OutOfMemoryError</strong>异常。</p>
+<h2 id="5-方法区"><a href="#5-方法区" class="headerlink" title="5 . 方法区"></a>5 . 方法区</h2><h3 id="（1）含义作用-4"><a href="#（1）含义作用-4" class="headerlink" title="（1）含义作用"></a><strong>（1）含义作用</strong></h3><p><strong>&emsp;&emsp;方法区（Method Area）</strong>与Java堆一样，是各个<strong>线程共享</strong>的内存区域，它用于存储已被虚拟机加载的<strong>类信息</strong>、<strong>常量</strong>、<strong>静态变量</strong>、<strong>即时编译器编译后的代码</strong>等数据。虽然Java虚拟机规范把方法区描述为堆的一个逻辑部分，但是它有一个别名叫做 <em>Non-Heap（非堆）</em>，目的是为了和<em>Java堆</em>区分开来。</p>
+<p>&emsp;&emsp;从jdk1.7已经开始准备<code>“去永久代”</code>的规划，<strong>jdk1.7的HotSpot中，已经把原本放在方法区中的静态变量、字符串常量池等移到堆内存中。</strong></p>
+<h4 id="PermGen（永久代）"><a href="#PermGen（永久代）" class="headerlink" title="PermGen（永久代）"></a>PermGen（永久代）</h4><p>&emsp;&emsp;<strong>方法区</strong>是<code>JVM的规范</code>，而<strong>永久代</strong>是方法区的一种实现，并且<code>只有HotSpot才有PermGen space</code>，而对于其他类型的虚拟机并没有<code>PermGen space</code>。</p>
+<p>&emsp;&emsp;在JDK1.8中，HotSpot已经没有<code>PermGen space</code>这个区间了，取而代之是<code>Metaspace（元空间）</code></p>
+<h4 id="Metaspace（元空间）"><a href="#Metaspace（元空间）" class="headerlink" title="Metaspace（元空间）"></a>Metaspace（元空间）</h4><p>&emsp;&emsp;在JDK1.8中，<code>永久代</code>已经不存在，存储的<strong>类信息、编译后的代码数据</strong>等已经移动到了<strong>MetaSpace（元空间）</strong>中，元空间并没有处于<code>堆内存上</code>，而是直接占用的<code>本地内存</code>（NativeMemory）。</p>
+<p>&emsp;&emsp;元空间的本质和永久代类似，都是对JVM规范中方法区的实现。不过元空间与永久代之间最大的区别在于：<strong>元空间并不在虚拟机中，而是使用本地内存</strong>。</p>
+<p>&emsp;&emsp;元空间的大小<strong>仅受本地内存限制</strong>，可以通过以下参数来指定元空间大小：</p>
+<ul>
+<li><strong>-XX:MetaspaceSize</strong>，初始空间大小，达到该值就会触发垃圾收集进行类型卸载，同时GC会对该值进行调整：如果释放了大量的空间，就适当降低该值；如果释放了很少的空间，那么在不超过<code>MaxMetaspaceSize</code>时，适当提高该值</li>
+<li><strong>-XX:MaxMetaspaceSize</strong>，最大空间，默认是没有限制的</li>
+<li><strong>-XX:MinMetaspaceFreeRatio</strong>，在GC之后，最小的Metaspace剩余空间容量的百分比，减少为分配空间所导致的垃圾收集</li>
+<li><strong>-XX:MaxMetaspaceFreeRatio</strong>，在GC之后，最大的Metaspace剩余空间容量的百分比，减少为释放空间所导致的垃圾收集</li>
+</ul>
+<h3 id="（2）虚拟机规范记录（有关异常）-1"><a href="#（2）虚拟机规范记录（有关异常）-1" class="headerlink" title="（2）虚拟机规范记录（有关异常）"></a><strong>（2）虚拟机规范记录（有关异常）</strong></h3><p>&emsp;&emsp;Java虚拟机规范对方法区的限制非常宽松，除了和Java堆一样不需要连续的内存和可以选择固定大小或可扩展外，还可以选择不实现垃圾收集。相对而言，垃圾收集行为在这个区域比较少见。<strong>此区域的内存回收目标主要是针对常量池的回收和对类型的卸载</strong>，一般来说，回收效果难以令人满意，尤其是类型的卸载，条件相对苛刻，但是这部分区域回收是有必要的。</p>
+<p>&emsp;&emsp;根据Java虚拟机规范的规定，当方法无法满足内存需求时，将会抛出<strong>OutOfMemoryError</strong>异常。</p>
+<h2 id="6-运行时常量池"><a href="#6-运行时常量池" class="headerlink" title="6 . 运行时常量池"></a>6 . 运行时常量池</h2><h3 id="（1）含义作用-5"><a href="#（1）含义作用-5" class="headerlink" title="（1）含义作用"></a>（1）含义作用</h3><p>&emsp;&emsp;<strong>运行时常量池（Runtime Constant Pool）</strong>是<strong>方法区</strong>的一部分。Class文件中除了有类的版本、字段、方法、接口等描述信息外，还有一项信息是<strong>常量池（Constant Pool Table）</strong>，用于存放编译期生成的各种字面量和符号引用，这部分内容将在类加载后进入方法区的运行时常量池存放。</p>
+<h3 id="（2）运行时常量池和Class文件"><a href="#（2）运行时常量池和Class文件" class="headerlink" title="（2）运行时常量池和Class文件"></a>（2）运行时常量池和Class文件</h3><p>&emsp;&emsp;Java虚拟机对Class文件每一部分（自然包括常量池）的格式有严格规定，每一个字节用于存储那种数据都必须符合规范上的要求才会被虚拟机认可、装载和执行。但对于运行时常量池，Java虚拟机规范没有做任何有关细节的要求，不同的提供商实现的虚拟机可以按照自己的需求来实现此内存区域。不过一般而言，除了保存Class文件中的描述符号引用外，还会把翻译出的直接引用也存储在运行时常量池中。</p>
+<p>&emsp;&emsp;运行时常量池相对于Class文件常量池的另外一个重要特征是<strong>具备动态性</strong>，Java语言并不要求常量一定只有编译器才能产生，也就是并非置入Class文件中的常量池的内容才能进入方法区运行时常量池，运行期间也可能将新的常量放入池中，此特性被开发人员利用得比较多的便是String类的intern() 方法。</p>
+<h3 id="（3）虚拟机规范记录（有关异常）-2"><a href="#（3）虚拟机规范记录（有关异常）-2" class="headerlink" title="（3）虚拟机规范记录（有关异常）"></a>（3）虚拟机规范记录（有关异常）</h3><p>&emsp;&emsp;运行时常量池是方法区的一部分，自然受到方法区的内存限制，当常量池无法再申请到内存时会抛出<strong>OutOfMemoryError</strong>异常。</p>
+<h2 id="7-直接内存"><a href="#7-直接内存" class="headerlink" title="7 . 直接内存"></a>7 . 直接内存</h2><h3 id="（1）含义作用-6"><a href="#（1）含义作用-6" class="headerlink" title="（1）含义作用"></a>（1）含义作用</h3><p>&emsp;&emsp;<strong>直接内存（Direct Memory）</strong>并不是虚拟机运行时数据的一部分，也不是Java虚拟机规范中定义的内存区域。但这部分内存也被频繁运用，而却可能导致<strong>OutOfMemoryError</strong>异常出现。</p>
+<h3 id="（2）有关异常"><a href="#（2）有关异常" class="headerlink" title="（2）有关异常"></a>（2）有关异常</h3><p>&emsp;&emsp;本机直接内存的分配不会受到Java堆大小的限制，但是既然是内存，还是会受到本机总内存（包括RAM以及SWAP区或分页文件）大小以及处理器寻址空间的限制。服务器管理员在配置虚拟机参数时，会根据实际内存设置-Xmx等参数信息，但经常忽略直接内存，使得各个内存区域总和大于物理内存限制（包括物理的和操作系统的限制），从而导致动态扩展时出现<strong>OutOfMemoryError</strong>异常。</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/基础知识/" rel="tag"># 基础知识</a>
+          
+            <a href="/tags/JAVA/" rel="tag"># JAVA</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/04/17/JWT/" rel="next" title="前后端分离-JWT">
+                <i class="fa fa-chevron-left"></i> 前后端分离-JWT
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/header.jpg" alt="Gary">
+            
+              <p class="site-author-name" itemprop="name">Gary</p>
+              <div class="site-description motion-element" itemprop="description">主攻JAVA。</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">9</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">9</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/legatoplay" title="GitHub &rarr; https://github.com/legatoplay" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#运行时区域内存"><span class="nav-number">1.</span> <span class="nav-text">运行时区域内存</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-程序计数器"><span class="nav-number">1.1.</span> <span class="nav-text">1. 程序计数器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#（1）含义作用"><span class="nav-number">1.1.1.</span> <span class="nav-text">（1）含义作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（2）计数器与多线程"><span class="nav-number">1.1.2.</span> <span class="nav-text">（2）计数器与多线程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（3）虚拟机规范记录（有关异常）"><span class="nav-number">1.1.3.</span> <span class="nav-text">（3）虚拟机规范记录（有关异常）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Java虚拟机栈"><span class="nav-number">1.2.</span> <span class="nav-text">2 . Java虚拟机栈</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#（1）含义作用-1"><span class="nav-number">1.2.1.</span> <span class="nav-text">（1）含义作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（2）Java内存区分误区"><span class="nav-number">1.2.2.</span> <span class="nav-text">（2）Java内存区分误区</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（3）虚拟机栈中的局部变量表"><span class="nav-number">1.2.3.</span> <span class="nav-text">（3）虚拟机栈中的局部变量表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（4）虚拟机规范记录（有关异常）"><span class="nav-number">1.2.4.</span> <span class="nav-text">（4）虚拟机规范记录（有关异常）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-本地方法栈"><span class="nav-number">1.3.</span> <span class="nav-text">3 . 本地方法栈</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#（1）含义作用-2"><span class="nav-number">1.3.1.</span> <span class="nav-text">（1）含义作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（2）虚拟机规范记录（有关异常）"><span class="nav-number">1.3.2.</span> <span class="nav-text">（2）虚拟机规范记录（有关异常）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-Java堆"><span class="nav-number">1.4.</span> <span class="nav-text">4 . Java堆</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#（1）含义作用-3"><span class="nav-number">1.4.1.</span> <span class="nav-text">（1）含义作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（2）Java堆与垃圾回收器"><span class="nav-number">1.4.2.</span> <span class="nav-text">（2）Java堆与垃圾回收器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（3）虚拟机规范记录（有关异常）-1"><span class="nav-number">1.4.3.</span> <span class="nav-text">（3）虚拟机规范记录（有关异常）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-方法区"><span class="nav-number">1.5.</span> <span class="nav-text">5 . 方法区</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#（1）含义作用-4"><span class="nav-number">1.5.1.</span> <span class="nav-text">（1）含义作用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#PermGen（永久代）"><span class="nav-number">1.5.1.1.</span> <span class="nav-text">PermGen（永久代）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Metaspace（元空间）"><span class="nav-number">1.5.1.2.</span> <span class="nav-text">Metaspace（元空间）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（2）虚拟机规范记录（有关异常）-1"><span class="nav-number">1.5.2.</span> <span class="nav-text">（2）虚拟机规范记录（有关异常）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-运行时常量池"><span class="nav-number">1.6.</span> <span class="nav-text">6 . 运行时常量池</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#（1）含义作用-5"><span class="nav-number">1.6.1.</span> <span class="nav-text">（1）含义作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（2）运行时常量池和Class文件"><span class="nav-number">1.6.2.</span> <span class="nav-text">（2）运行时常量池和Class文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（3）虚拟机规范记录（有关异常）-2"><span class="nav-number">1.6.3.</span> <span class="nav-text">（3）虚拟机规范记录（有关异常）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-直接内存"><span class="nav-number">1.7.</span> <span class="nav-text">7 . 直接内存</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#（1）含义作用-6"><span class="nav-number">1.7.1.</span> <span class="nav-text">（1）含义作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（2）有关异常"><span class="nav-number">1.7.2.</span> <span class="nav-text">（2）有关异常</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gary</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/three/three.min.js"></script>
+
+  
+  <script src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.0"></script>
+
+  <script src="/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.0"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.0"></script>
+<script src="/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.0"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
